@@ -1,5 +1,7 @@
 // Load Wi-Fi library
+#include <NTPClient.h>
 #include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 
 // Replace with your network credentials
 const char* ssid     = "SSID";
@@ -24,6 +26,80 @@ unsigned long currentTime = millis();
 unsigned long previousTime = 0; 
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
+
+// Define NTP Client
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
+// Vars for ventilator-timer
+unsigned long ventStartTime = 0;
+unsigned long ventCurrentTime = 0;
+
+// Get_Unix_Time() Function that gets current epoch time
+unsigned long Get_Unix_Time() {
+  timeClient.update();
+  unsigned long now = timeClient.getEpochTime();
+  return now;
+}
+
+void Check_For_State() {
+  // turns the GPIOs on and off
+  if (state == 0) {
+    digitalWrite(relay, LOW);
+    ventCurrentTime = 0;
+    ventStartTime = 0;
+    
+  } else if (state == 1) {
+    digitalWrite(relay, HIGH);
+    ventCurrentTime = 0;
+    ventStartTime = 0;
+    
+  } else if (state == 2) {
+    if (ventStartTime == 0){
+      ventStartTime = Get_Unix_Time();
+      digitalWrite(relay, HIGH);
+      };
+    ventCurrentTime = Get_Unix_Time();
+    if((ventCurrentTime - ventStartTime) > (60*15)){
+      digitalWrite(relay, LOW);
+      state = 0;
+    };
+    
+  } else if (state == 3) {
+    if (ventStartTime == 0){
+      ventStartTime = Get_Unix_Time();
+      digitalWrite(relay, HIGH);
+      };
+    ventCurrentTime = Get_Unix_Time();
+    if((ventCurrentTime - ventStartTime) > (60*30)){
+      digitalWrite(relay, LOW);
+      state = 0;
+    };
+    
+  } else if (state == 4) {
+    if (ventStartTime == 0){
+      ventStartTime = Get_Unix_Time();
+      digitalWrite(relay, HIGH);
+      };
+    ventCurrentTime = Get_Unix_Time();
+    if((ventCurrentTime - ventStartTime) > (60*60)){
+      digitalWrite(relay, LOW);
+      state = 0;
+    };
+    
+  } else if (state == 5) {
+    if (ventStartTime == 0){
+      ventStartTime = Get_Unix_Time();
+      digitalWrite(relay, HIGH);
+      };
+    ventCurrentTime = Get_Unix_Time();
+    if((ventCurrentTime - ventStartTime) > (60*1)){
+      digitalWrite(relay, LOW);
+      state = 0;
+    };
+  }
+}
+
 
 void setup() {
   Serial.begin(115200);
@@ -56,6 +132,7 @@ void loop(){
   if (client) {                             // If a new client connects,
     Serial.println("New Client.");          // print a message out in the serial port
     String currentLine = "";                // make a String to hold incoming data from the client
+
     currentTime = millis();
     previousTime = currentTime;
     while (client.connected() && currentTime - previousTime <= timeoutTime) { // loop while the client's connected
@@ -132,7 +209,7 @@ void loop(){
               client.println("<a href= \"/4\"><button class=\"selectable\" id=\"min60\">60 Min</button></a></br>");
               client.println("<a href= \"/5\"><button class=\"selectable\" id=\"min1\">1 Min</button></a>");
             } else if (state == 1){
-              client.println("<a href= \"\"><button class=\"selectable selected\" id=\"on\">On</button></a></br>");
+              client.println("<a href= \"/1\"><button class=\"selectable selected\" id=\"on\">On</button></a></br>");
               client.println("<a href= \"/0\"><button class=\"selectable\" id=\"off\">Off</button></a>");
               client.println("</div>");
               client.println("<div class=\"box\"><p class=\"untertitel\">Timer</p>");
@@ -141,8 +218,8 @@ void loop(){
               client.println("<a href= \"/4\"><button class=\"selectable\" id=\"min60\">60 Min</button></a></br>");
               client.println("<a href= \"/5\"><button class=\"selectable\" id=\"min1\">1 Min</button></a>");
             } else if (state == 2){
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"on\">On</button></a></br>");
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"off\">Off</button></a>");
+              client.println("<a href= \"/1\"><button class=\"selectable\" id=\"on\">On</button></a></br>");
+              client.println("<a href= \"/0\"><button class=\"selectable\" id=\"off\">Off</button></a>");
               client.println("</div>");
               client.println("<div class=\"box\"><p class=\"untertitel\">Timer</p>");
               client.println("<a href= \"\"><button class=\"unselectable selected\" id=\"min15\">15 Min</button></a></br>");
@@ -150,8 +227,8 @@ void loop(){
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min60\">60 Min</button></a></br>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min1\">1 Min</button></a>");
             } else if (state == 3){
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"on\">On</button></a></br>");
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"off\">Off</button></a>");
+              client.println("<a href= \"/1\"><button class=\"selectable\" id=\"on\">On</button></a></br>");
+              client.println("<a href= \"/0\"><button class=\"selectable\" id=\"off\">Off</button></a>");
               client.println("</div>");
               client.println("<div class=\"box\"><p class=\"untertitel\">Timer</p>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min15\">15 Min</button></a></br>");
@@ -159,8 +236,8 @@ void loop(){
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min60\">60 Min</button></a></br>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min1\">1 Min</button></a>");
             } else if (state == 4){
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"on\">On</button></a></br>");
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"off\">Off</button></a>");
+              client.println("<a href= \"/1\"><button class=\"selectable\" id=\"on\">On</button></a></br>");
+              client.println("<a href= \"/0\"><button class=\"selectable\" id=\"off\">Off</button></a>");
               client.println("</div>");
               client.println("<div class=\"box\"><p class=\"untertitel\">Timer</p>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min15\">15 Min</button></a></br>");
@@ -168,8 +245,8 @@ void loop(){
               client.println("<a href= \"\"><button class=\"unselectable selected\" id=\"min60\">60 Min</button></a></br>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min1\">1 Min</button></a>");
             } else if (state == 5){
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"on\">On</button></a></br>");
-              client.println("<a href= \"\"><button class=\"unselectable\" id=\"off\">Off</button></a>");
+              client.println("<a href= \"/1\"><button class=\"selectable\" id=\"on\">On</button></a></br>");
+              client.println("<a href= \"/0\"><button class=\"selectable\" id=\"off\">Off</button></a>");
               client.println("</div>");
               client.println("<div class=\"box\"><p class=\"untertitel\">Timer</p>");
               client.println("<a href= \"\"><button class=\"unselectable\" id=\"min15\">15 Min</button></a></br>");
@@ -183,33 +260,7 @@ void loop(){
             client.println("<p id=\"copyright\">Oliver Seider Jr</p>");
             client.println("</body>");
                
-
-            // turns the GPIOs on and off
-            if (header.indexOf("GET /0") >= 0) {
-              digitalWrite(relay, LOW);
-            } else if (header.indexOf("GET /1") >= 0) {
-              digitalWrite(relay, HIGH);
-            } else if (header.indexOf("GET /2") >= 0) {
-              digitalWrite(relay, HIGH);
-              delay(1000*60*15);
-              digitalWrite(relay, LOW);
-              state = 0;
-            } else if (header.indexOf("GET /3") >= 0) {
-              digitalWrite(relay, HIGH);
-              delay(1000*60*30);
-              digitalWrite(relay, LOW);
-              state = 0;
-            } else if (header.indexOf("GET /4") >= 0) {
-              digitalWrite(relay, HIGH);
-              delay(1000*60*60);
-              digitalWrite(relay, LOW);
-              state = 0;
-            } else if (header.indexOf("GET /5") >= 0) {
-              digitalWrite(relay, HIGH);
-              delay(1000*60*1);
-              digitalWrite(relay, LOW);
-              state = 0;
-            }
+            Check_For_State();
             
             // The HTTP response ends with another blank line
             client.println();
@@ -230,4 +281,5 @@ void loop(){
     Serial.println("Client disconnected.");
     Serial.println("");
   }
+  Check_For_State();
 }
