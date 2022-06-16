@@ -17,7 +17,7 @@ String header;
 int state = 0;
 
 // Assign output variables to GPIO pins
-const int relay = 5;
+const int relay = 5;          // Reverse function (low -> on, high -> off)
 const int lever = 4;
 
 // Current time
@@ -45,56 +45,56 @@ unsigned long Get_Unix_Time() {
 void Check_For_State() {
   // turns the GPIOs on and off
   if (state == 0) {
-    digitalWrite(relay, LOW);
+    digitalWrite(relay, HIGH);
     ventCurrentTime = 0;
     ventStartTime = 0;
     
   } else if (state == 1) {
-    digitalWrite(relay, HIGH);
+    digitalWrite(relay, LOW);
     ventCurrentTime = 0;
     ventStartTime = 0;
     
   } else if (state == 2) {
     if (ventStartTime == 0){
       ventStartTime = Get_Unix_Time();
-      digitalWrite(relay, HIGH);
+      digitalWrite(relay, LOW);
       };
     ventCurrentTime = Get_Unix_Time();
     if((ventCurrentTime - ventStartTime) > (60*15)){
-      digitalWrite(relay, LOW);
+      digitalWrite(relay, HIGH);
       state = 0;
     };
     
   } else if (state == 3) {
     if (ventStartTime == 0){
       ventStartTime = Get_Unix_Time();
-      digitalWrite(relay, HIGH);
+      digitalWrite(relay, LOW);
       };
     ventCurrentTime = Get_Unix_Time();
     if((ventCurrentTime - ventStartTime) > (60*30)){
-      digitalWrite(relay, LOW);
+      digitalWrite(relay, HIGH);
       state = 0;
     };
     
   } else if (state == 4) {
     if (ventStartTime == 0){
       ventStartTime = Get_Unix_Time();
-      digitalWrite(relay, HIGH);
+      digitalWrite(relay, LOW);
       };
     ventCurrentTime = Get_Unix_Time();
     if((ventCurrentTime - ventStartTime) > (60*60)){
-      digitalWrite(relay, LOW);
+      digitalWrite(relay, HIGH);
       state = 0;
     };
     
   } else if (state == 5) {
     if (ventStartTime == 0){
       ventStartTime = Get_Unix_Time();
-      digitalWrite(relay, HIGH);
+      digitalWrite(relay, LOW);
       };
     ventCurrentTime = Get_Unix_Time();
     if((ventCurrentTime - ventStartTime) > (60*1)){
-      digitalWrite(relay, LOW);
+      digitalWrite(relay, HIGH);
       state = 0;
     };
   }
@@ -107,7 +107,7 @@ void setup() {
   pinMode(relay, OUTPUT);
   pinMode(lever, OUTPUT);
   // Set outputs
-  digitalWrite(relay, LOW);
+  digitalWrite(relay, HIGH);
   digitalWrite(lever, HIGH);
 
   // Connect to Wi-Fi network with SSID and password
