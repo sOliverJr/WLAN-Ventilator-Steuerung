@@ -17,7 +17,10 @@ String header;
 int state = 0;
 
 // Assign output variables to GPIO pins
-const int relay = 5;          // Reverse function (low -> on, high -> off)
+// Reversed functionality (low -> on, high -> off)
+// Connect Realay to NO & COM
+// That way, if the arduino is off/not connected to power, the ventilator is on
+const int relay = 5;          
 const int lever = 4;
 
 // Current time
